@@ -6,7 +6,9 @@ import userRoutes from "./routes/userRoutes.js"
 import { corsUrl, port } from "./config.js"
 import todoRoutes from "./routes/todoRoutes.js"
 import { errorHandler } from "./middleware/errorMiddleware.js"
+import dotenv from "dotenv"
 
+dotenv.config()
 const PORT = port ?? 8080
 
 export const app = express()
