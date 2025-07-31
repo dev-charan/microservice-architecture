@@ -12,5 +12,6 @@ export const db = {
   user: process.env.DB_USER || "",
   password: process.env.DB_USER_PWD || "",
 }
+export const logDirectory = process.env.LOG_DIR
 
 export const corsUrl = process.env.CORS_URL

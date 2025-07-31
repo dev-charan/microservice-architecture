@@ -13,6 +13,7 @@ const config_1 = require("./config");
 const todoRoutes_1 = __importDefault(require("./routes/todoRoutes"));
 const errorMiddleware_1 = require("./middleware/errorMiddleware");
 const dotenv_1 = __importDefault(require("dotenv"));
+const Logger_1 = __importDefault(require("./core/Logger"));
 dotenv_1.default.config();
 const PORT = config_1.port !== null && config_1.port !== void 0 ? config_1.port : 8080;
 exports.app = (0, express_1.default)();
@@ -25,4 +26,5 @@ exports.app.use("/api/todo", todoRoutes_1.default);
 exports.app.use(errorMiddleware_1.errorHandler);
 exports.app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    Logger_1.default.info(`Server is running on port ${PORT}`);
 });
