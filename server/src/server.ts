@@ -1,75 +1,14 @@
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import mongoose from "mongoose";
-
-import connectDB, { isDBHealthy } from "./database/index";
-import userRoutes from "./routes/userRoutes";
-import todoRoutes from "./routes/todoRoutes";
-import { errorHandler } from "./middleware/errorMiddleware";
-import { corsUrl, port } from "./config";
-import Logger from "./core/Logger";
-
 dotenv.config();
 
+import mongoose from "mongoose";
+import app from "./app";
+import Logger from "./core/Logger";
+import connectDB from "./database";
+import { port } from "./config";
+
 const PORT = port ?? 8080;
-const app = express();
 
-// Security middleware
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use(cookieParser());
-
-// CORS configuration
-app.use(
-  cors({
-    origin: corsUrl,
-    credentials: true,
-    optionsSuccessStatus: 200,
-  })
-);
-
-// Routes
-app.use("/api/users", userRoutes);
-app.use("/api/todo", todoRoutes);
-
-// Health check endpoint
-app.get("/health", async (req, res) => {
-  try {
-    const dbHealthy = await isDBHealthy();
-    const status = dbHealthy ? "✅ UP" : "❌ DOWN";
-
-    res.status(dbHealthy ? 200 : 503).json({
-      status,
-      timestamp: new Date().toISOString(),
-      uptime: Math.floor(process.uptime()),
-      database: {
-        connected: dbHealthy,
-        readyState: mongoose.connection.readyState,
-      },
-    });
-  } catch (error) {
-    Logger.error("Health check failed:", error);
-    res.status(503).json({
-      status: "❌ DOWN",
-      error: "Health check failed",
-    });
-  }
-});
-
-// 404 handler
-app.use("*", (req, res) => {
-  res.status(404).json({
-    message: "Route not found",
-    path: req.originalUrl,
-  });
-});
-
-// Error handling middleware (must be last)
-app.use(errorHandler);
-
-// Graceful shutdown
 const gracefulShutdown = async (signal: string, serverInstance: any) => {
   Logger.info(`📡 Received ${signal}, shutting down gracefully...`);
 
@@ -91,26 +30,21 @@ const gracefulShutdown = async (signal: string, serverInstance: any) => {
     });
   }
 
-  // Force close after 10 seconds
   setTimeout(() => {
     Logger.error("⚠️ Forced shutdown after timeout");
     process.exit(1);
   }, 10000);
 };
 
-// Start server
 const startServer = async () => {
   try {
-    // Connect to database first
     await connectDB();
 
-    // Start the server
     const server = app.listen(PORT, () => {
       Logger.info(`🚀 Server running on port ${PORT}`);
       Logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
     });
 
-    // Setup graceful shutdown
     process.on("SIGTERM", () => gracefulShutdown("SIGTERM", server));
     process.on("SIGINT", () => gracefulShutdown("SIGINT", server));
 
@@ -121,7 +55,7 @@ const startServer = async () => {
   }
 };
 
-// Handle uncaught exceptions
+// Global error handlers
 process.on("uncaughtException", (err) => {
   Logger.error("❌ Uncaught Exception:", err);
   process.exit(1);
@@ -132,11 +66,7 @@ process.on("unhandledRejection", (reason, promise) => {
   process.exit(1);
 });
 
-// Initialize server
-let server: any;
-
+// Run it
 (async () => {
-  server = await startServer();
+  await startServer();
 })();
-
-export { app };

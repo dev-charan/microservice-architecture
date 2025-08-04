@@ -4,6 +4,7 @@ import generateToken from "../utils/generateToken"
 import { ProtectedRequest } from "../types/app.request"
 import { Request,Response } from "express"
 import { Mongoose ,ObjectId } from "mongoose"
+import { BadRequestError } from "../core/CustomError"
 
 interface LoginRequestBody {
   email: string;
@@ -24,8 +25,7 @@ const loginUser = asyncHandler(
         email: user.email,
       });
     } else {
-      res.status(401);
-      throw new Error("Invalid email or password");
+      throw new BadRequestError("Invalid User Credential")
     }
   }
 );
