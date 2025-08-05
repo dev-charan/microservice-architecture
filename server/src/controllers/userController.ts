@@ -5,6 +5,7 @@ import { ProtectedRequest } from "../types/app.request"
 import { Request,Response } from "express"
 import { Mongoose ,ObjectId } from "mongoose"
 import { BadRequestError } from "../core/CustomError"
+import { userLoginSchema } from "../routes/userSchema"
 
 interface LoginRequestBody {
   email: string;
@@ -15,6 +16,11 @@ const loginUser = asyncHandler(
   async (req: Request<{}, {}, LoginRequestBody>, res: Response) => {
     const { email, password } = req.body;
 
+   const data= userLoginSchema.safeParse({email,password})
+   
+   if(!data.success){
+    throw new BadRequestError("User email or password not currect")
+   }
     const user = await User.findOne({ email });
 
     if (user && (await user?.matchPassword?.(password))) {
